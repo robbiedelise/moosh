@@ -18,6 +18,7 @@ class FileUpload extends MooshCommand
 
         $this->addArgument('file_path');
 
+        $this->addOption('u|username:', 'use username instead of contextid');
         $this->addOption('c|contextid:', 'set context id', "5");
         $this->addOption('m|component:', 'set type of component, user by default', "user");
         $this->addOption('f|filearea:', 'set filearea, private by default', 'private');
@@ -54,11 +55,21 @@ class FileUpload extends MooshCommand
             cli_error("File '" . $arguments[0] . "' is not readable.");
         }
 
+        $contextid = $this->expandedOptions['contextid'];
+        if ($this->expandedOptions['username']) {
+            $user = get_user_by_name($this->expandedOptions['username']);
+            if ($user && $user->id) {
+                $contextid = \context_user::instance($user->id)->id;
+            } else {
+                cli_error("User " . $this->expandedOptions['username'] . " does not exist");
+            }
+        }
+
         $fp = get_file_storage();
 
         $filerecord = new \stdClass();
 
-        $filerecord->contextid  = $this->expandedOptions['contextid'];
+        $filerecord->contextid  = $contextid;
         $filerecord->component  = $this->expandedOptions['component'];
         $filerecord->filearea   = $this->expandedOptions['filearea'];
         $filerecord->itemid     = $this->expandedOptions['itemid'];
